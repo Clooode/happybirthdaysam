@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>me when it is my birthday</title>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <h1>Only meaningful use for ramps found so far btw</h1>
+
+    <div id="controls" class="control-panel">
+        <div class="equation-row">
+            <span class="math-prefix">f(x) = </span>
+            
+            <div class="input-inline">
+                <label for="paramA">Multiplier</label>
+                <input type="number" id="paramA" min="1" max="10" step="0.5" value="4.0">
+            </div>
+            
+            <span class="math-term"> &bull; (1 - x)</span>
+            
+            <div class="input-inline math-exponent-wrapper">
+                <label for="exponentB">Exponent</label>
+                <select id="exponentB">
+                    <option value="6" selected>6 (Boron)</option>
+                    <option value="7">7 (Carbon my beloved &lt;3)</option>
+                    <option value="8" >8 (Nitrogen)</option>
+                    <option value="9">9 (Oxygen)</option>
+                    <option value="10">10 (Fluorine)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="settings-row">
+            <div class="control-group">
+                <label for="initVelocity">Initial Velocity (natural units):</label>
+                <select id="initVelocity">
+                    <option value="2" selected>1</option>
+                    <option value="4">2</option>
+                    <option value="6">3</option>
+                    <option value="7">4</option>
+                    <option value="10">5</option>
+                    <option value="13.4">SIX SEVEN</option>
+                    <option value="16">8</option>
+                    <option value="18">9</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <label for="shrinkFactor">Ramp Lip Height:</label>
+                <select id="shrinkFactor">
+                    <option value="0.25">0.25</option>
+                    <option value="0.50">0.50</option>
+                    <option value="0.75">0.75</option>
+                    <option value="1.00" selected>1.00</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="action-row">
+            <button id="launchBtn" onclick="triggerLaunch()">Release Ball</button>
+        </div>
+    </div> 
+
+   <div id="canvas-container">
+    <canvas id="gameCanvas" width="900" height="550"></canvas>
+    
+    <img id="overlayParrot" src="assets/6-7parrot.gif" style="display: none; position: absolute; pointer-events: none; z-index: 10;" alt="Parrot">
+    <img id="overlayTarget" src="assets/cake.gif" style="position: absolute; transform: translate(-50%, -50%); pointer-events: none; z-index: 5;" alt="Target">
+    
+    <div id="cake-pointer">
+        <div class="pointer-text">HIT THE TARGET TO BECOME UNC</div>
+        <div class="pointer-arrow">➔</div>
+    </div>
+</div>
+
+<div id="message" class="message"></div>
+
+<div id="victoryModal" class="modal-overlay">
+    <div class="modal-content-grid">
+        <div class="modal-column-gif">
+            <img src="assets/cat.gif" alt="Birthday Cat Left">
+        </div>
+        
+        <div class="modal-text-zone">
+            <div class="modal-emoji">🎉🎂🥳</div>
+            <h2>HAPPY BIRTHDAY!</h2>
+            <p> HAVE A DAY</p>
+            <p>(yippee)</p>
+            <button onclick="closeVictoryModal()">Launch Again</button>
+        </div>
+        
+        <div class="modal-column-gif">
+            <img src="assets/cat.gif" alt="Birthday Cat Right">
+        </div>
+    </div>
+</div>
+
+    <script src="app.js" defer></script> 
+</body>
+</html>
