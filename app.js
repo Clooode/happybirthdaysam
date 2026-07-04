@@ -46,24 +46,40 @@ let ballSpeed = 0;
 let ballPathHistory = [];
 // Convert math coordinates to layout pixels
 function mathToPixel(mx, my) {
+    // Get the element's current size on the screen
+    const rect = canvas.getBoundingClientRect();
+    
+    // Calculate scale ratios based on your math range (0-5, 0-10)
+    // We use 900 and 600 as the "base" math-to-pixel coordinate system
+    const scaleX = rect.width / 900;
+    const scaleY = rect.height / 600;
+
     return {
-        x: originX + (mx * unitScaleX),
-        y: groundY - (my * unitScaleY)
+        x: (originX + (mx * unitScaleX)) * scaleX,
+        y: (groundY - (my * unitScaleY)) * scaleY
     };
 }
 
 // Fixed Target Alignment Engine
 function positionTargetAsset() {
     if (!overlayTarget) return;
+    
+    // 1. Get the exact pixel coordinates for (2.0, 6.0)
     let targetPix = mathToPixel(targetMath.x, targetMath.y);
     
-    // Position the HTML image perfectly centered on top of the target point
+    // 2. Position the Cake Image
     overlayTarget.style.left = `${targetPix.x}px`;
     overlayTarget.style.top = `${targetPix.y}px`;
     overlayTarget.style.width = `60px`;  
     overlayTarget.style.height = `60px`; 
-}
 
+    // 3. Position the Cake Pointer (The bounce callout)
+    const cakePointer = document.getElementById('cake-pointer');
+    if (cakePointer) {
+        cakePointer.style.left = `${targetPix.x}px`;
+        cakePointer.style.top = `${targetPix.y - 30}px`; // 30px above the target
+    }
+}
 function generateTrack() {
     trackPoints = [];
     let inputA = parseFloat(document.getElementById('paramA').value);
@@ -389,4 +405,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     resetSimulation();
     loop();
+});
+
+window.addEventListener('resize', () => {
+    // Add a tiny delay to allow CSS to finish calculating the new size
+    setTimeout(positionTargetAsset, 50);
 });
