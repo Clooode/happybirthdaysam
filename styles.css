@@ -163,7 +163,7 @@ body, html {
     .equation-row { gap: 10px; }
 }
 
-/* --- Pointer Callout --- */
+/* --- Pointer Callout --- */ 
 #cake-pointer {
     position: absolute;
     pointer-events: none;

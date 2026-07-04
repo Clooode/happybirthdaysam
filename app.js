@@ -203,7 +203,7 @@ function updatePhysics() {
             document.getElementById('victoryModal').style.display = 'flex';
         }
 
-        // Out-of-bounds safety check
+        // Out-of-bounds safety check 
         if (ball.y >= groundY + 200 || ball.x > canvas.width || ball.x < 0) {
             ball.state = 'done';
             if (messageEl && messageEl.textContent === "") {
