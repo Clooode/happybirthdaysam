@@ -60,8 +60,8 @@ function positionTargetAsset() {
     // Position the HTML image perfectly centered on top of the target point
     overlayTarget.style.left = `${targetPix.x}px`;
     overlayTarget.style.top = `${targetPix.y}px`;
-    overlayTarget.style.width = `45px`;  
-    overlayTarget.style.height = `45px`; 
+    overlayTarget.style.width = `60px`;  
+    overlayTarget.style.height = `60px`; 
 }
 
 function generateTrack() {
@@ -198,7 +198,7 @@ function updatePhysics() {
 
         let mathDistToTarget = Math.hypot(ballMathX - targetMath.x, ballMathY - targetMath.y);
 
-        if (mathDistToTarget <= 0.1) {
+        if (mathDistToTarget <= 0.2) {
             ball.state = 'done';
             document.getElementById('victoryModal').style.display = 'flex';
         }
