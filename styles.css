@@ -161,21 +161,27 @@ input:focus, select:focus {
     border-color: #1b4332;;
 }
 
-/* --- Canvas Frame Container Anchor Context --- */
+
+/* Update your container to be responsive */
 #canvas-container {
-    position: relative;        /* Crucial context anchor: links absolute coordinates to canvas boundaries */
-    display: inline-block;     /* Prevents block box overflow outside the 900px asset limit */
-    margin: 0 auto 20px auto;
+    width: 100%;
+    max-width: 900px; /* Keep your original size limit */
+    margin: 0 auto;
+    overflow: hidden; /* Prevents horizontal scroll bars */
 }
 
+/* Make the canvas scale down on smaller screens */
 #gameCanvas {
-    display: block;
-    background-color: #ffffff;
-    border: 1px solid #b8b8b8;
-    border-radius: 2px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    width: 100%;    /* Canvas will shrink to fit the screen */
+    height: auto;   /* Maintains aspect ratio */
 }
 
+/* Ensure the modal grid doesn't break on small screens */
+.modal-content-grid {
+    width: 95vw;    /* 95% of viewport width */
+    height: auto;   /* Let height grow with content */
+    grid-template-columns: 1fr; /* Stack into 1 column on tiny screens */
+}
 /* --- Feedback Message Center --- */
 #message {
     font-size: 18px;
@@ -250,24 +256,7 @@ input:focus, select:focus {
     align-items: center;
 }
 
-/* --- The Main 3-Column Split Card --- */
-.modal-content-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr; /* Exact thirds split */
-    align-items: center;
-    background: #f4f9f5; /* Soft, clean sage-tinted white background */
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(12, 35, 23, 0.3);
-    border: 3px solid #2a9d8f; /* Minty emerald border accent */
-    
-    /* Dimensions */
-    width: 850px; 
-    height: 400px;
-    max-width: 95%;
-    box-sizing: border-box;
-    overflow: hidden;
-    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
+
 
 /* --- Outer Thirds: GIF Alignment Panels --- */
 .modal-column-gif {
@@ -351,4 +340,27 @@ input:focus, select:focus {
 @keyframes popIn {
     from { transform: scale(0.8); opacity: 0; }
     to { transform: scale(1); opacity: 1; }
+}
+
+/* For screens smaller than 600px (most phones) */
+@media (max-width: 600px) {
+    .modal-content-grid {
+        grid-template-columns: 1fr; /* Stack grid columns vertically */
+        height: auto;
+        padding: 10px;
+    }
+
+    .modal-column-gif {
+        width: 50px; /* Hide cats on mobile to save screen space */
+    }
+
+    .modal-text-zone {
+        padding: 10px;
+    }
+
+    /* Make buttons bigger and easier to tap with a thumb */
+    button {
+        padding: 15px 40px !important;
+        font-size: 18px !important;
+    }
 }
