@@ -181,6 +181,6 @@ body, html {
 
 .pointer-arrow {
     color: var(--accent-green);
-    text-align: center;
+    text-align: right;
     transform: rotate(90deg);
-}
+} 
