@@ -163,21 +163,49 @@ body, html {
     .equation-row { gap: 10px; }
 }
 
+/* --- Pointer Callout --- */
 #cake-pointer {
     position: absolute;
     pointer-events: none;
     z-index: 12;
     animation: bounceCallout 2s infinite ease-in-out;
+    /* Centers the pointer horizontally relative to its left position */
     transform: translateX(-50%); 
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
+.pointer-text {
+    background-color: var(--accent-green);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    white-space: nowrap; /* Prevents text wrapping */
+}
+
 .pointer-arrow {
     color: var(--accent-green);
     text-align: center;
-    /* Remove rotation if you are using a downward arrow character like ↓ */
-    font-size: 20px; 
-    margin-top: -5px;
+    font-size: 1.2rem;
+    line-height: 1;
+}
+#overlayTarget {
+    position: absolute;
+    /* Use a percentage that represents the cake's size on your 900px wide grid */
+    /* 60px / 900px = approx 6.6% */
+    width: 6.6vw; 
+    height: 6.6vw;
+    
+    /* Set a minimum and maximum size so it doesn't get microscopic on phones */
+    min-width: 30px;
+    min-height: 30px;
+    max-width: 80px;
+    max-height: 80px;
+    
+    object-fit: contain;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 5;
 }

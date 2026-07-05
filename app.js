@@ -1,108 +1,119 @@
-// Change to 'let' so our DOMContentLoaded lifecycle hook can safely mount/re-assign it 💡
-let canvas = document.getElementById('gameCanvas');
-let ctx = canvas.getContext('2d');
-let messageEl = document.getElementById('message');
-
-// --- Cache DOM Elements at Initial Boot ---
+// --- Global DOM Elements ---
+let canvas, ctx, messageEl;
 const overlayParrot = document.getElementById('overlayParrot');
 const overlayTarget = document.getElementById('overlayTarget');
 
-// --- Mathematical Scale Configuration (0,0) to (5,10) ---
-const originX = 80;                  
-const groundY = canvas.height - 60;  
-const unitScaleX = 140;              // 5.0 units * 140px = 700px horizontal span
-const unitScaleY = 42;               // 10.0 units * 42px = 420px vertical span
+// --- Global Coordinate System (The "Brain") ---
+const margin = 40; 
+let originX = 0;
+let groundY = 0;
+let unitScaleX = 0;
+let unitScaleY = 0;
 
-// Physics constants 
+// --- Physics & Game Configuration ---
 const g = 0.15;                      // Gravity constant
-
-// Dynamic Game Config Parameters
 let a = 4.0;                         // Equation Multiplier
 let b = 8;                           // Equation Exponent
 let shrinkFactor = 0.5;              // Ramp Peak Height
 let initVelParam = 2.0;              // Starting push velocity
 
 // Fixed Target at Math position (2.0, 6.0)
-const targetMath = { x: 2.0, y: 6 }; 
+const targetMath = { x: 2.0, y: 6.0 }; 
 const targetRadius = 18;
 
-// --- Pop-up Alert Tracking Variables ---
-let parrotMessageActive = false;      // Controls if the message should draw
-let parrotMessageTimestamp = 0;       // Stores the exact system time the pop-up started
-let lastInitVelValue = 2.0;           // Tracks previous dropdown state to detect a fresh change
-
 // --- Dynamic Obnoxious Parrot State Variables ---
+let parrotMessageActive = false;      
+let parrotMessageTimestamp = 0;       
+let lastInitVelValue = 2.0;           
 let parrotX = 100;
 let parrotY = 100;
-let parrotVX = 10;                    // Increased velocity values to match doubled velocity scale
+let parrotVX = 10;                    
 let parrotVY = 8;  
 const parrotSize = 250; 
 
-// Ball instance variables
+// --- Ball & Track State Variables ---
 let ball = { x: 0, y: 0, vx: 0, vy: 0, radius: 8, state: 'idle' };
 let trackPoints = [];
 let currentTrackIndex = 0;
 let ballSpeed = 0; 
 let ballPathHistory = [];
-// Convert math coordinates to layout pixels
-function mathToPixel(mx, my) {
-    // 1. Get the current physical size of the canvas on the screen
-    const rect = canvas.getBoundingClientRect();
-    
-    // 2. Calculate the ratio between the "math" 900x550 space 
-    // and the "physical" space on the phone
-    const scaleX = rect.width / 900;
-    const scaleY = rect.height / 550;
 
-    // 3. Apply the scaling
+
+// ==========================================
+// CORE CALCULATION ENGINE
+// ==========================================
+
+function updateScale() {
+    if (!canvas) return;
+
+    // 1. Force internal resolution to match screen layout!
+    const rect = canvas.getBoundingClientRect();
+    if (canvas.width !== rect.width || canvas.height !== rect.height) {
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+    }
+
+    // 2. Define the Graph Origin (bottom-left)
+    originX = margin;
+    groundY = canvas.height - margin;
+
+    // 3. Define Pixels per Math Unit (assuming X: 0-5, Y: 0-10)
+    unitScaleX = (canvas.width - (margin * 2)) / 5.0;
+    unitScaleY = (canvas.height - (margin * 2)) / 10.0;
+}
+
+function mathToPixel(mx, my) {
+    // Relies purely on the global scale variables calculated above
     return {
-        x: (originX + (mx * unitScaleX)) * scaleX,
-        y: (groundY - (my * unitScaleY)) * scaleY
+        x: originX + (mx * unitScaleX),
+        y: groundY - (my * unitScaleY)
     };
 }
+
 function positionTargetAsset() {
     if (!overlayTarget) return;
     
-    // 1. Get the exact pixel coordinates
     let targetPix = mathToPixel(targetMath.x, targetMath.y);
     
-    // 2. Position Cake (Centered using the transform: translate(-50%, -50%) in your HTML)
+    // Position Cake Center perfectly on the node
     overlayTarget.style.left = `${targetPix.x}px`;
     overlayTarget.style.top = `${targetPix.y}px`;
 
-    // 3. Position the Cake Pointer
     const cakePointer = document.getElementById('cake-pointer');
     if (cakePointer) {
         cakePointer.style.left = `${targetPix.x}px`;
-        // Move the pointer up by 40-50px so it hovers above the cake
-        cakePointer.style.top = `${targetPix.y - 50}px`; 
+        cakePointer.style.top = `${targetPix.y - 45}px`; 
     }
 }
 
-
 function generateTrack() {
     trackPoints = [];
-    let inputA = parseFloat(document.getElementById('paramA').value);
     
+    // Safely pull from inputs, falling back to defaults if DOM isn't ready
+    let inputA = parseFloat(document.getElementById('paramA')?.value);
     if (isNaN(inputA)) inputA = 4.0; 
     a = Math.max(1.0, Math.min(10.0, inputA)); 
 
-    b = parseInt(document.getElementById('exponentB').value);
-    shrinkFactor = parseFloat(document.getElementById('shrinkFactor').value);
+    let inputB = document.getElementById('exponentB')?.value;
+    b = inputB ? parseInt(inputB) : 8;
     
-    let currentVel = parseFloat(document.getElementById('initVelocity').value);
+    let inputShrink = document.getElementById('shrinkFactor')?.value;
+    shrinkFactor = inputShrink ? parseFloat(inputShrink) : 0.5;
+    
+    let inputVel = document.getElementById('initVelocity')?.value;
+    let currentVel = inputVel ? parseFloat(inputVel) : 2.0;
     initVelParam = currentVel;
 
+    // Trigger Parrot easter egg
     if (currentVel === 13.4 && lastInitVelValue !== 13.4) {
         parrotMessageActive = true;
         parrotMessageTimestamp = Date.now(); 
-        
         parrotX = Math.random() * (canvas.width - parrotSize);
         parrotY = Math.random() * (canvas.height - parrotSize);
     }
-    
     lastInitVelValue = currentVel;
 
+    // Build Math Track Points
     const thresholdY = 0.05 * a; 
     const transitionX = 1 - Math.pow(thresholdY / a, 1 / b);
 
@@ -117,17 +128,16 @@ function generateTrack() {
     for (let i = 1; i <= uphillSteps; i++) {
         let mx = transitionX + (0.5 * (i / uphillSteps));
         let normalizedUpProgress = (mx - transitionX) / 0.5; 
-        
         let my = thresholdY + Math.pow(normalizedUpProgress, 2) * (shrinkFactor * a - thresholdY); 
         trackPoints.push({ xMath: mx, yMath: my, ...mathToPixel(mx, my) });
     }
 }
 
 function resetSimulation() {
+    updateScale();
     generateTrack();
     
-    // 💡 RequestAnimationFrame wrapper ensures browser DOM layout updates have completely finished
-    // before computing target asset coordinates. Prevents canvas/cake visual desync.
+    // Ensure layout happens exactly when the track is freshly built
     requestAnimationFrame(() => {
         positionTargetAsset();
     });
@@ -146,10 +156,15 @@ function resetSimulation() {
     ball.vy = 0;
 }
 
-// --- Physics Engine ---
+
+// ==========================================
+// PHYSICS & RENDER LOOP
+// ==========================================
+
 function updatePhysics() {
     if (ball.state === 'idle' || ball.state === 'done') return;
     ballPathHistory.push({ x: ball.x, y: ball.y });
+    
     if (ball.state === 'onRamp') {
         let currentPoint = trackPoints[currentTrackIndex];
         let heightDrop = a - currentPoint.yMath;
@@ -160,7 +175,6 @@ function updatePhysics() {
         while (remainingMove > 0 && currentTrackIndex < trackPoints.length - 1) {
             let p1 = trackPoints[currentTrackIndex];
             let p2 = trackPoints[currentTrackIndex + 1];
-
             let distToNextNode = Math.hypot(p2.x - ball.x, p2.y - ball.y);
 
             if (distToNextNode < 0.01) {
@@ -209,6 +223,7 @@ function updatePhysics() {
         ball.x += ball.vx;
         ball.y += ball.vy;
 
+        // 🚨 IMPORTANT FIX: Collision detection now uses the shared global scale 
         let ballMathX = (ball.x - originX) / unitScaleX;
         let ballMathY = (groundY - ball.y) / unitScaleY;
 
@@ -216,10 +231,11 @@ function updatePhysics() {
 
         if (mathDistToTarget <= 0.2) {
             ball.state = 'done';
-            document.getElementById('victoryModal').style.display = 'flex';
+            const victoryModal = document.getElementById('victoryModal');
+            if (victoryModal) victoryModal.style.display = 'flex';
         }
 
-        // Out-of-bounds safety check 
+        // Out-of-bounds check 
         if (ball.y >= groundY + 200 || ball.x > canvas.width || ball.x < 0) {
             ball.state = 'done';
             if (messageEl && messageEl.textContent === "") {
@@ -230,42 +246,47 @@ function updatePhysics() {
     }
 }
 
-// --- Render Engine ---
 function draw() {
+    if (!ctx) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // 1. Draw Math Cartesian Grid lines (Y Range: 0 to 10)
-    ctx.strokeStyle = '#e2e2e2'; 
+    
+    // --- 1. Draw Grid Lines ---
+    ctx.strokeStyle = '#e0e0e0'; 
     ctx.lineWidth = 1;
-    for (let yVal = 0; yVal <= 10.0; yVal += 1.0) {
-        let pixelPos = mathToPixel(0, yVal);
-        ctx.beginPath(); ctx.moveTo(0, pixelPos.y); ctx.lineTo(canvas.width, pixelPos.y); ctx.stroke();
-        ctx.fillStyle = '#666';
-        ctx.font = 'bold 13px sans-serif';
-        ctx.fillText(yVal.toFixed(0), originX - 25, pixelPos.y + 4);
+    ctx.fillStyle = '#999';
+    ctx.font = '12px sans-serif';
+
+    // X-axis vertical grid lines
+    for (let i = 0; i <= 5; i++) {
+        let pix = mathToPixel(i, 0); 
+        ctx.beginPath();
+        ctx.moveTo(pix.x, 0);
+        ctx.lineTo(pix.x, groundY);
+        ctx.stroke();
+        ctx.fillText(i.toString(), pix.x - 4, groundY + 15);
+    }
+
+    // Y-axis horizontal grid lines
+    for (let i = 0; i <= 10; i++) {
+        let pix = mathToPixel(0, i); 
+        ctx.beginPath();
+        ctx.moveTo(originX, pix.y);
+        ctx.lineTo(canvas.width, pix.y);
+        ctx.stroke();
+        ctx.fillText(i.toString(), originX - 25, pix.y + 4);
     }
     
-    // Draw Math Cartesian Grid lines (X Range: 0 to 5)
-    for (let xVal = 0; xVal <= 5.0; xVal += 0.5) {
-        let pixelPos = mathToPixel(xVal, 0);
-        ctx.beginPath(); ctx.moveTo(pixelPos.x, 0); ctx.lineTo(pixelPos.x, canvas.height); ctx.stroke();
-        ctx.fillStyle = '#666';
-        ctx.font = 'bold 13px sans-serif';
-        ctx.fillText(xVal.toFixed(1), pixelPos.x - 8, groundY + 20);
-    }
-
-    // 2. Main Axis Reference Bars
+    // --- 2. Main Axis Reference Bars ---
     ctx.strokeStyle = '#555';
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(originX, 0); ctx.lineTo(originX, groundY); ctx.stroke(); 
     ctx.beginPath(); ctx.moveTo(originX, groundY); ctx.lineTo(canvas.width, groundY); ctx.stroke(); 
 
     ctx.fillStyle = '#888';
-    ctx.font = '12px sans-serif';
     ctx.fillText("X Axis", canvas.width - 60, groundY + 35);
     ctx.fillText("Y Axis", originX - 50, 30);
 
-    // 3. Draw Incline Track Layout
+    // --- 3. Draw Incline Track Layout ---
     ctx.strokeStyle = '#1d3557';
     ctx.lineWidth = 5;
     ctx.lineCap = 'round';
@@ -278,20 +299,11 @@ function draw() {
         ctx.stroke();
     }
 
-    // // Structural scaffolding
-    // ctx.strokeStyle = '#eef5fa';
-    // ctx.lineWidth = 1;
-    // for (let i = 0; i < trackPoints.length; i += 5) {
-    //     ctx.beginPath(); ctx.moveTo(trackPoints[i].x, trackPoints[i].y); ctx.lineTo(trackPoints[i].x, groundY); ctx.stroke();
-    // }
-
-    // ✨ NEW STEP: Render Dynamic Dashed Path Trace Tail
+    // --- 4. Render Dynamic Dashed Path Trace Tail ---
     if (ballPathHistory.length > 1) {
-        ctx.strokeStyle = '#cccccc';      /* Crisp light grey color hex */
+        ctx.strokeStyle = '#cccccc';      
         ctx.lineWidth = 2;
         ctx.lineCap = 'round';
-        
-        // Tells the canvas to draw 4px dashes separated by 4px blank spaces 💡
         ctx.setLineDash([4, 4]); 
         
         ctx.beginPath();
@@ -300,13 +312,10 @@ function draw() {
             ctx.lineTo(ballPathHistory[i].x, ballPathHistory[i].y);
         }
         ctx.stroke();
-        
-        // 🚨 IMPORTANT: Reset line dash configuration to solid 
-        // so it doesn't accidentally make your track or grid lines dashed too!
         ctx.setLineDash([]); 
     }
 
-    // 4. Render Projectile Ball
+    // --- 5. Render Projectile Ball ---
     ctx.fillStyle = '#821414'; 
     ctx.shadowBlur = 4;
     ctx.shadowColor = 'rgba(0,0,0,0.2)';
@@ -315,7 +324,7 @@ function draw() {
     ctx.fill();
     ctx.shadowBlur = 0; 
 
-    // 5. ANIMATE THE BOUNCING PARROT ELEMENT LAYER
+    // --- 6. ANIMATE THE BOUNCING PARROT ---
     if (initVelParam === 13.4) {
         let elapsed = Date.now() - parrotMessageTimestamp;
 
@@ -338,7 +347,6 @@ function draw() {
                 overlayParrot.style.height = `${parrotSize}px`;
             }
 
-            // --- Central Overlay Text Pop-up ---
             if (parrotMessageActive) {
                 const boxWidth = 320;
                 const boxHeight = 70;
@@ -377,7 +385,11 @@ function loop() {
     requestAnimationFrame(loop); 
 }
 
-// --- Global Interactive Control Router ---
+
+// ==========================================
+// INTERACTIVE ROUTERS & LISTENERS
+// ==========================================
+
 window.triggerLaunch = function() {
     resetSimulation();        
     currentTrackIndex = 0;     
@@ -385,29 +397,42 @@ window.triggerLaunch = function() {
     ballPathHistory = [];    
 };
 
-// Global Clean Closer Trigger
 window.closeVictoryModal = function() {
-    document.getElementById('victoryModal').style.display = 'none';
+    const victoryModal = document.getElementById('victoryModal');
+    if (victoryModal) victoryModal.style.display = 'none';
     resetSimulation(); 
 };
 
-// Listeners to rebuild track geometry on input adjustment
-document.getElementById('paramA').addEventListener('change', resetSimulation);
-document.getElementById('exponentB').addEventListener('change', resetSimulation);
-document.getElementById('shrinkFactor').addEventListener('change', resetSimulation);
-document.getElementById('initVelocity').addEventListener('change', resetSimulation);
+// Rebuild track dynamically on dropdown/input changes
+const pA = document.getElementById('paramA');
+const pB = document.getElementById('exponentB');
+const pShrink = document.getElementById('shrinkFactor');
+const pVel = document.getElementById('initVelocity');
+
+if (pA) pA.addEventListener('change', resetSimulation);
+if (pB) pB.addEventListener('change', resetSimulation);
+if (pShrink) pShrink.addEventListener('change', resetSimulation);
+if (pVel) pVel.addEventListener('change', resetSimulation);
+
+
+// --- BOOT & WINDOW LISTENERS ---
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Safely look up DOM components on execution mounting lifecycle
     canvas = document.getElementById('gameCanvas');
     ctx = canvas.getContext('2d');
     messageEl = document.getElementById('message'); 
+    
+    // Calculate initial scale constraints BEFORE doing any math!
+    updateScale();
     
     resetSimulation();
     loop();
 });
 
 window.addEventListener('resize', () => {
-    // Add a tiny delay to allow CSS to finish calculating the new size
-    setTimeout(positionTargetAsset, 50);
+    // When the screen shifts, reset the global scale brain, then redraw the scene
+    updateScale();
+    generateTrack();
+    positionTargetAsset();
+    draw(); 
 });
