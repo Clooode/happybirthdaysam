@@ -46,14 +46,15 @@ let ballSpeed = 0;
 let ballPathHistory = [];
 // Convert math coordinates to layout pixels
 function mathToPixel(mx, my) {
-    // Get the element's current size on the screen
+    // 1. Get the current physical size of the canvas on the screen
     const rect = canvas.getBoundingClientRect();
     
-    // Calculate scale ratios based on your math range (0-5, 0-10)
-    // We use 900 and 600 as the "base" math-to-pixel coordinate system
+    // 2. Calculate the ratio between the "math" 900x550 space 
+    // and the "physical" space on the phone
     const scaleX = rect.width / 900;
-    const scaleY = rect.height / 600;
+    const scaleY = rect.height / 550;
 
+    // 3. Apply the scaling
     return {
         x: (originX + (mx * unitScaleX)) * scaleX,
         y: (groundY - (my * unitScaleY)) * scaleY
