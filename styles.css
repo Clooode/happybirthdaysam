@@ -163,24 +163,21 @@ body, html {
     .equation-row { gap: 10px; }
 }
 
-/* --- Pointer Callout --- */ 
 #cake-pointer {
     position: absolute;
     pointer-events: none;
     z-index: 12;
     animation: bounceCallout 2s infinite ease-in-out;
-}
-
-.pointer-text {
-    background-color: var(--accent-green);
-    color: white;
-    padding: 5px 10px;
-    border-radius: 15px;
-    font-size: 0.8rem;
+    transform: translateX(-50%); 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .pointer-arrow {
     color: var(--accent-green);
     text-align: center;
-    transform: rotate(90deg);
-} 
+    /* Remove rotation if you are using a downward arrow character like ↓ */
+    font-size: 20px; 
+    margin-top: -5px;
+}

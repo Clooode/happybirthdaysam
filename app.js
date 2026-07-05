@@ -60,27 +60,26 @@ function mathToPixel(mx, my) {
         y: (groundY - (my * unitScaleY)) * scaleY
     };
 }
-
-// Fixed Target Alignment Engine
 function positionTargetAsset() {
     if (!overlayTarget) return;
     
-    // 1. Get the exact pixel coordinates for (2.0, 6.0)
+    // 1. Get the exact pixel coordinates
     let targetPix = mathToPixel(targetMath.x, targetMath.y);
     
-    // 2. Position the Cake Image
+    // 2. Position Cake (Centered using the transform: translate(-50%, -50%) in your HTML)
     overlayTarget.style.left = `${targetPix.x}px`;
     overlayTarget.style.top = `${targetPix.y}px`;
-    overlayTarget.style.width = `60px`;  
-    overlayTarget.style.height = `60px`; 
 
-    // 3. Position the Cake Pointer (The bounce callout)
+    // 3. Position the Cake Pointer
     const cakePointer = document.getElementById('cake-pointer');
     if (cakePointer) {
         cakePointer.style.left = `${targetPix.x}px`;
-        cakePointer.style.top = `${targetPix.y - 30}px`; // 30px above the target
+        // Move the pointer up by 40-50px so it hovers above the cake
+        cakePointer.style.top = `${targetPix.y - 50}px`; 
     }
 }
+
+
 function generateTrack() {
     trackPoints = [];
     let inputA = parseFloat(document.getElementById('paramA').value);
